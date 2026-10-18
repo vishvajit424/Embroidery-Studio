@@ -293,3 +293,4 @@ scripts/check.mjs    offline static checks
 ```
 
 All icons, UI and code are original. The reference store was used only as a functional guide.
+# Embroidery-Studio
