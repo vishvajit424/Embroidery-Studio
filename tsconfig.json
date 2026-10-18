@@ -1,0 +1,42 @@
+{
+  "include": [
+    "**/*.ts",
+    "**/*.tsx",
+    ".react-router/types/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "build",
+    "extensions",
+    "tests",
+    "scripts"
+  ],
+  "compilerOptions": {
+    "lib": [
+      "DOM",
+      "DOM.Iterable",
+      "ES2022"
+    ],
+    "types": [
+      "node",
+      "vite/client",
+      "@shopify/polaris-types"
+    ],
+    "rootDirs": [
+      ".",
+      "./.react-router/types"
+    ],
+    "strict": true,
+    "isolatedModules": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "allowJs": true,
+    "jsx": "react-jsx",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "resolveJsonModule": true,
+    "target": "ES2022",
+    "noEmit": true,
+    "allowImportingTsExtensions": true
+  }
+}

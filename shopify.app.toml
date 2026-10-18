@@ -1,0 +1,50 @@
+# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+# `shopify app dev` updates application_url, redirect URLs and the app proxy URL automatically.
+# For production, set them to your real domain before `shopify app deploy`.
+
+client_id = "ffc83586152bc76879177f38de8b750c"
+name = "Embroidery Studio"
+application_url = "https://tpy9a1-8k.myshopify.com"
+embedded = true
+
+[build]
+automatically_update_urls_on_dev = true
+
+[access_scopes]
+# read/write_products: product configuration metafields and add-on products
+# write_files: customer logos and merchant icons in Shopify Files
+# read_orders: embroidery order statistics (orders/create webhook)
+# write_cart_transforms: activate the Cart Transform function (cartTransformCreate)
+scopes = "read_products,write_products,write_files,read_orders,write_cart_transforms"
+
+[webhooks]
+api_version = "2026-04"
+
+  [[webhooks.subscriptions]]
+  topics = ["app/uninstalled"]
+  uri = "/webhooks/app-uninstalled"
+
+  # Mandatory privacy webhooks for App Store apps.
+  [[webhooks.subscriptions]]
+  compliance_topics = ["customers/data_request", "customers/redact", "shop/redact"]
+  uri = "/webhooks/compliance"
+
+  # orders/create is registered per shop from the app (see app/shopify.server.ts)
+  # because it needs protected customer data access.
+
+# Storefront logo uploads: https://{shop}/apps/embroidery-studio/upload -> {url}/upload
+[app_proxy]
+url = "https://embroidery-studio-xyz.onrender.com/proxy"
+subpath = "embroidery-studio"
+prefix = "apps"
+
+[pos]
+embedded = false
+
+
+[auth]
+redirect_urls = [
+  "https://embroidery-studio-xyz.onrender.com/auth/callback",
+  "https://embroidery-studio-xyz.onrender.com/auth/shopify/callback",
+  "https://embroidery-studio-xyz.onrender.com/api/auth/callback"
+]

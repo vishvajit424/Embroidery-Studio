@@ -1,0 +1,132 @@
+{%- comment -%}
+  Embroidery Studio app block.
+  Data comes from two app-owned metafields written by the Embroidery Studio admin:
+    product.metafields['$app:embroidery'].config   (per product: options, prices, placements)
+    app.metafields.embroidery.library              (per shop: colours, fonts, icons, placements)
+  Prices are never taken from here at checkout: the Cart Transform function
+  prices embroidery from the product metafield.
+{%- endcomment -%}
+{%- liquid
+  assign es_config = product.metafields['$app:embroidery'].config.value
+  assign es_library = app.metafields.embroidery.library.value
+  assign es_ready = false
+  if product and es_config and es_config.enabled == true and es_library
+    if es_config.options.top.enabled == true or es_config.options.bottom.enabled == true or es_config.options.bundle.enabled == true
+      assign es_ready = true
+    endif
+  endif
+  assign es_icon_files = 'icon-caduceus.svg,icon-heart.svg,icon-stethoscope.svg,icon-cross.svg,icon-star-of-life.svg,icon-tooth.svg,icon-syringe.svg,icon-medical-bag.svg,icon-hospital.svg' | split: ','
+-%}
+
+{%- if es_ready -%}
+  <div
+    class="es-root"
+    data-es-root
+    style="--es-accent: {{ block.settings.accent_color }}; --es-accent-text: {{ block.settings.accent_text_color }};"
+    {{ block.shopify_attributes }}
+  >
+    <div class="es-card" data-es-card>
+      <div class="es-card__head">
+        <div>
+          <h3 class="es-card__title">{{ block.settings.heading | escape }}</h3>
+          <p class="es-card__desc">{{ block.settings.description | escape }}</p>
+        </div>
+      </div>
+      <noscript><p class="es-card__note">Please enable JavaScript to add embroidery.</p></noscript>
+    </div>
+
+    <script type="application/json" data-es-data>
+      {
+        "productId": {{ product.id | json }},
+        "currency": {{ shop.currency | json }},
+        "image": {% if product.featured_image %}{{ product.featured_image | image_url: width: 1200 | json }}{% else %}null{% endif %},
+        "variants": [
+          {%- for v in product.variants limit: 250 -%}
+            {"id": {{ v.id | json }}, "price": {{ v.price | json }}, "image": {% if v.featured_image %}{{ v.featured_image | image_url: width: 1200 | json }}{% else %}null{% endif %}}
+            {%- unless forloop.last -%},{%- endunless -%}
+          {%- endfor -%}
+        ],
+        "assets": {
+          {%- for file in es_icon_files -%}
+            {{ file | json }}: {{ file | asset_url | json }}{%- unless forloop.last -%},{%- endunless -%}
+          {%- endfor -%}
+        },
+        "config": {{ es_config | json }},
+        "library": {{ es_library | json }},
+        "text": {
+          "heading": {{ block.settings.heading | json }},
+          "description": {{ block.settings.description | json }},
+          "add": {{ block.settings.add_label | json }},
+          "skip": {{ block.settings.skip_label | json }},
+          "skipped": {{ block.settings.skipped_message | json }},
+          "edit": {{ block.settings.edit_label | json }},
+          "remove": {{ block.settings.remove_label | json }},
+          "chooseTitle": {{ block.settings.choose_title | json }},
+          "confirmTitle": {{ block.settings.confirm_title | json }},
+          "delivery": {{ block.settings.delivery_message | json }},
+          "terms": {{ block.settings.terms_message | json }},
+          "requireAck": {{ block.settings.require_ack | json }},
+          "ackLabel": {{ block.settings.ack_label | json }},
+          "goBack": {{ block.settings.go_back_label | json }},
+          "confirm": {{ block.settings.confirm_label | json }},
+          "proxyPath": {{ block.settings.proxy_path | json }},
+          "updatePrice": {{ block.settings.update_price | json }},
+          "priceSelector": {{ block.settings.price_selector | json }},
+          "totalLabel": {{ block.settings.total_label | json }},
+          "addedMessage": {{ block.settings.added_message | json }}
+        }
+      }
+    </script>
+    {%- comment -%}
+      Loaded with a script tag instead of the schema's "javascript" key: that key
+      limits app-block scripts to 10 KB (Theme Check AssetSizeAppBlockJavaScript).
+      The script guards against running twice when a page has several blocks.
+    {%- endcomment -%}
+    <script src="{{ 'embroidery.js' | asset_url }}" defer="defer"></script>
+  </div>
+{%- elsif request.design_mode -%}
+  <div class="es-root es-root--notice" {{ block.shopify_attributes }}>
+    <p>
+      <strong>Embroidery Studio</strong> is hidden on this product: embroidery is not enabled for it, or no add-on products are mapped yet.
+      Configure it in the Embroidery Studio app → Products. (This note is only visible in the theme editor.)
+    </p>
+  </div>
+{%- endif -%}
+
+{% schema %}
+{
+  "name": "Embroidery Studio",
+  "target": "section",
+  "enabled_on": { "templates": ["product"] },
+  "stylesheet": "embroidery.css",
+  "settings": [
+    { "type": "header", "content": "Card" },
+    { "type": "text", "id": "heading", "label": "Heading", "default": "CUSTOM EMBROIDERY" },
+    { "type": "text", "id": "description", "label": "Description", "info": "[price] is replaced with the lowest embroidery price in the customer's currency.", "default": "Starting at [price] — personalise your product" },
+    { "type": "text", "id": "add_label", "label": "Add button", "default": "Add Embroidery" },
+    { "type": "text", "id": "skip_label", "label": "Skip button", "default": "Skip for Now" },
+    { "type": "text", "id": "skipped_message", "label": "Message after skipping", "default": "No embroidery will be added." },
+    { "type": "text", "id": "edit_label", "label": "Edit button", "default": "Edit" },
+    { "type": "text", "id": "remove_label", "label": "Remove button", "default": "Remove" },
+    { "type": "header", "content": "Customiser" },
+    { "type": "text", "id": "choose_title", "label": "Options title", "default": "Choose your embroidery" },
+    { "type": "text", "id": "confirm_title", "label": "Confirmation title", "default": "Here's your final personalised look!" },
+    { "type": "textarea", "id": "delivery_message", "label": "Delivery message", "default": "Embroidery orders take an additional 2-4 business days for dispatch." },
+    { "type": "textarea", "id": "terms_message", "label": "Terms / returns message", "default": "Since they are customised just for you, embroidered items are not eligible for return or exchange." },
+    { "type": "checkbox", "id": "require_ack", "label": "Customer must tick to accept the terms", "default": false },
+    { "type": "text", "id": "ack_label", "label": "Acceptance checkbox text", "default": "I understand embroidered items can't be returned or exchanged." },
+    { "type": "text", "id": "go_back_label", "label": "Go back button", "default": "GO BACK" },
+    { "type": "text", "id": "confirm_label", "label": "Confirm button", "default": "CONFIRM" },
+    { "type": "header", "content": "Price" },
+    { "type": "checkbox", "id": "update_price", "label": "Show the price with embroidery on the product page", "info": "After the customer confirms embroidery, the product price shows garment + embroidery.", "default": true },
+    { "type": "text", "id": "price_selector", "label": "Product price selector (optional)", "info": "Only needed if your theme's price doesn't update. Example: .product__price .money" },
+    { "type": "text", "id": "total_label", "label": "Total label", "default": "Total with embroidery" },
+    { "type": "text", "id": "added_message", "label": "Message after adding to cart", "default": "Added to cart with embroidery" },
+    { "type": "header", "content": "Style" },
+    { "type": "color", "id": "accent_color", "label": "Accent colour", "default": "#3F3380" },
+    { "type": "color", "id": "accent_text_color", "label": "Text on accent", "default": "#FFFFFF" },
+    { "type": "header", "content": "Advanced" },
+    { "type": "text", "id": "proxy_path", "label": "App proxy path", "info": "Where customer logos are uploaded. Only change this if you changed the app proxy in the app settings.", "default": "/apps/embroidery-studio" }
+  ]
+}
+{% endschema %}

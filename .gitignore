@@ -1,0 +1,10 @@
+node_modules
+/build
+/.react-router
+.env
+*.db
+*.db-journal
+.shopify/*
+!.shopify/project.json
+extensions/*/dist
+extensions/*/generated

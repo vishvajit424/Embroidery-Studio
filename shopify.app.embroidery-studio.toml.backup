@@ -1,0 +1,19 @@
+# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+
+client_id = "b883fb8055cb2222e16fbd3aeef17848"
+name = "Embroidery Studio"
+application_url = "https://doctogscrubs.com"
+embedded = true
+
+[access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+scopes = "read_orders,read_products,write_cart_transforms,write_files,write_products"
+
+[auth]
+redirect_urls = [ "https://doctogscrubs.com/api/auth" ]
+
+[webhooks]
+api_version = "2027-01"
+
+[build]
+automatically_update_urls_on_dev = true

@@ -1,0 +1,231 @@
+// Embroidery Studio database schema.
+//
+// Development uses SQLite. For production switch `provider` to "postgresql"
+// (or "mysql") and point DATABASE_URL at your database - every model below
+// only uses portable column types (JSON is stored as TEXT on purpose).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Session {
+  id                  String    @id
+  shop                String
+  state               String
+  isOnline            Boolean   @default(false)
+  scope               String?
+  expires             DateTime?
+  accessToken         String
+  userId              BigInt?
+  firstName           String?
+  lastName            String?
+  email               String?
+  accountOwner        Boolean   @default(false)
+  locale              String?
+  collaborator        Boolean?  @default(false)
+  emailVerified       Boolean?  @default(false)
+  refreshToken        String?
+  refreshTokenExpires DateTime?
+}
+
+/// One row per installed shop: default prices, default add-on variants and
+/// upload limits. Product configurations start from these values.
+model Store {
+  id              Int      @id @default(autoincrement())
+  shop            String   @unique
+  currencyCode    String   @default("INR")
+  topPrice        Decimal  @default(299)
+  bottomPrice     Decimal  @default(199)
+  logoPrice       Decimal  @default(250)
+  bundlePrice     Decimal  @default(598)
+  bundleCompareAt Decimal  @default(748)
+  uploadMaxMb     Int      @default(5)
+  topVariantId    String?
+  bottomVariantId String?
+  logoVariantId   String?
+  bundleVariantId String?
+  librarySyncedAt DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  products  ProductEmbroideryConfig[]
+  options   EmbroideryOption[]
+  icons     EmbroideryIcon[]
+  fonts     EmbroideryFont[]
+  colors    EmbroideryColor[]
+  positions EmbroideryPosition[]
+  uploads   Upload[]
+  orders    EmbroideryOrderLine[]
+}
+
+/// Per-product embroidery settings. Synced to the product metafield
+/// `$app:embroidery.config`, which the theme block and Cart Transform read.
+model ProductEmbroideryConfig {
+  id                String    @id @default(cuid())
+  shop              String
+  productId         String
+  productTitle      String    @default("")
+  productHandle     String    @default("")
+  imageUrl          String?
+  enabled           Boolean   @default(false)
+  topEnabled        Boolean   @default(true)
+  bottomEnabled     Boolean   @default(true)
+  logoEnabled       Boolean   @default(true)
+  bundleEnabled     Boolean   @default(true)
+  topPrice          Decimal   @default(299)
+  bottomPrice       Decimal   @default(199)
+  logoPrice         Decimal   @default(250)
+  bundlePrice       Decimal   @default(598)
+  bundleCompareAt   Decimal   @default(748)
+  topPosition       String    @default("leftChest")
+  iconPosition      String    @default("rightChest")
+  bottomPosition    String    @default("leftSide")
+  /// JSON: { "<positionKey>": { x, y, width, rotation } } per-product overrides
+  positionOverrides String    @default("{}")
+  bottomImageUrl    String?
+  uploadMaxSize     Int       @default(5)
+  requireName       Boolean   @default(true)
+  maxChars          Int       @default(22)
+  /// Optional per-product add-on variants (fall back to the Store defaults)
+  topVariantId      String?
+  bottomVariantId   String?
+  logoVariantId     String?
+  bundleVariantId   String?
+  syncedAt          DateTime?
+  syncError         String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  store Store @relation(fields: [shop], references: [shop], onDelete: Cascade)
+
+  @@unique([shop, productId])
+  @@index([shop, enabled])
+}
+
+/// Customer-facing label/description for each option (top, bottom, logo, bundle).
+model EmbroideryOption {
+  id          String  @id @default(cuid())
+  shop        String
+  key         String
+  label       String
+  description String  @default("")
+  sortOrder   Int     @default(0)
+  enabled     Boolean @default(true)
+
+  store Store @relation(fields: [shop], references: [shop], onDelete: Cascade)
+
+  @@unique([shop, key])
+}
+
+model EmbroideryIcon {
+  id        String   @id @default(cuid())
+  shop      String
+  name      String
+  /// https URL, or "asset:<file>" for icons bundled with the theme extension
+  imageUrl  String
+  fileId    String?
+  /// "top" | "bottom" | "any"
+  placement String   @default("top")
+  enabled   Boolean  @default(true)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  store Store @relation(fields: [shop], references: [shop], onDelete: Cascade)
+
+  @@index([shop])
+}
+
+model EmbroideryFont {
+  id            String   @id @default(cuid())
+  shop          String
+  name          String
+  /// CSS font-family value, e.g. "'Dancing Script', cursive"
+  cssFamily     String
+  /// Optional https stylesheet (e.g. Google Fonts CSS URL)
+  stylesheetUrl String?
+  previewText   String   @default("Your Name")
+  enabled       Boolean  @default(true)
+  sortOrder     Int      @default(0)
+  createdAt     DateTime @default(now())
+
+  store Store @relation(fields: [shop], references: [shop], onDelete: Cascade)
+
+  @@index([shop])
+}
+
+model EmbroideryColor {
+  id        String   @id @default(cuid())
+  shop      String
+  name      String
+  hex       String
+  enabled   Boolean  @default(true)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  store Store @relation(fields: [shop], references: [shop], onDelete: Cascade)
+
+  @@index([shop])
+}
+
+/// Named placements with relative coordinates (0..1 of the preview image).
+model EmbroideryPosition {
+  id       String  @id @default(cuid())
+  shop     String
+  key      String
+  name     String
+  /// "top" | "bottom"
+  area     String  @default("top")
+  x        Float
+  y        Float
+  width    Float
+  rotation Float   @default(0)
+  enabled  Boolean @default(true)
+
+  store Store @relation(fields: [shop], references: [shop], onDelete: Cascade)
+
+  @@unique([shop, key])
+}
+
+/// Customer logo uploads (stored in Shopify Files).
+model Upload {
+  id        String   @id @default(cuid())
+  shop      String
+  fileId    String?
+  url       String?
+  filename  String
+  mimeType  String
+  size      Int
+  /// "PENDING" | "READY" | "FAILED"
+  status    String   @default("PENDING")
+  error     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  store Store @relation(fields: [shop], references: [shop], onDelete: Cascade)
+
+  @@index([shop, createdAt])
+}
+
+/// One row per embroidered order line (no customer personal data stored).
+model EmbroideryOrderLine {
+  id         String   @id @default(cuid())
+  shop       String
+  orderId    String
+  orderName  String
+  lineItemId String
+  productId  String?
+  type       String
+  quantity   Int      @default(1)
+  hasLogo    Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  store Store @relation(fields: [shop], references: [shop], onDelete: Cascade)
+
+  @@unique([shop, lineItemId])
+  @@index([shop, type])
+}

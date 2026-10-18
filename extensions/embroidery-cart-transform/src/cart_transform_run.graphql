@@ -1,0 +1,43 @@
+query RunInput {
+  presentmentCurrencyRate
+  cart {
+    lines {
+      id
+      quantity
+      cost {
+        amountPerQuantity {
+          amount
+          currencyCode
+        }
+      }
+      enabled: attribute(key: "_embroidery_enabled") { value }
+      type: attribute(key: "_embroidery_type") { value }
+      top: attribute(key: "_embroidery_top") { value }
+      bottom: attribute(key: "_embroidery_bottom") { value }
+      firstName: attribute(key: "_embroidery_first_name") { value }
+      secondName: attribute(key: "_embroidery_second_name") { value }
+      color: attribute(key: "_embroidery_color") { value }
+      font: attribute(key: "_embroidery_font") { value }
+      icon: attribute(key: "_embroidery_icon") { value }
+      logo: attribute(key: "_embroidery_logo") { value }
+      uploadId: attribute(key: "_embroidery_upload_id") { value }
+      positions: attribute(key: "_embroidery_positions") { value }
+      variantId: attribute(key: "_embroidery_variant_id") { value }
+      version: attribute(key: "_embroidery_config_version") { value }
+      summary: attribute(key: "Embroidery") { value }
+      logoUrl: attribute(key: "Embroidery logo") { value }
+      merchandise {
+        __typename
+        ... on ProductVariant {
+          id
+          product {
+            title
+            metafield(namespace: "$app:embroidery", key: "config") {
+              jsonValue
+            }
+          }
+        }
+      }
+    }
+  }
+}

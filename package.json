@@ -1,0 +1,59 @@
+{
+  "name": "shopify-embroidery-studio",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.12"
+  },
+  "scripts": {
+    "dev": "shopify app dev",
+    "build": "react-router build",
+    "start": "react-router-serve ./build/server/index.js",
+    "postinstall": "prisma generate",
+    "setup": "prisma generate && prisma migrate deploy",
+    "docker-start": "npm run setup && npm run start",
+    "deploy": "shopify app deploy",
+    "config:validate": "shopify app config validate",
+    "typecheck": "prisma generate && react-router typegen && tsc --noEmit",
+    "check": "node scripts/check.mjs",
+    "test": "npm run test:unit && npm run test:e2e",
+    "test:unit": "node --no-warnings --experimental-strip-types --test tests/unit/cart-transform.test.mjs tests/unit/storefront-core.test.cjs tests/unit/utils.test.ts",
+    "test:e2e": "node tests/e2e/storefront.spec.cjs",
+    "prisma": "prisma",
+    "generate": "shopify app generate extension"
+  },
+  "dependencies": {
+    "@prisma/client": "6.19.3",
+    "@react-router/node": "^7.12.0",
+    "@react-router/serve": "^7.12.0",
+    "@shopify/app-bridge-react": "^4.2.13",
+    "@shopify/shopify_function": "~2.0.0",
+    "@shopify/shopify-app-react-router": "~3.0.0",
+    "@shopify/shopify-app-session-storage-prisma": "~11.0.0",
+    "isbot": "^5.2.2",
+    "prisma": "6.19.3",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "react-router": "^7.12.0"
+  },
+  "devDependencies": {
+    "@react-router/dev": "^7.12.0",
+    "@shopify/app-bridge-types": "^0.7.2",
+    "@shopify/cli": "^3.80.0",
+    "@shopify/polaris-types": "^1.0.1",
+    "@types/node": "^22.10.0",
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.0",
+    "graphql": "^16.10.0",
+    "playwright": "^1.50.0",
+    "typescript": "^5.9.3",
+    "vite": "^6.3.6"
+  },
+  "allowScripts": {
+    "@prisma/client@6.19.3": true,
+    "@prisma/engines@6.19.3": true,
+    "prisma@6.19.3": true,
+    "esbuild@0.27.4": true,
+    "esbuild@0.25.12": true
+  }
+}
